@@ -60,7 +60,7 @@ jobs:
             const commit = await github.rest.repos.getCommit({
               owner: 'JackLikePython',
               repo: 'mpv',
-              ref: `master`
+              ref: 'master'
             })
             core.exportVariable('sha', String(commit.data.sha))
             

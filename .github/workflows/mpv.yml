@@ -181,6 +181,9 @@ jobs:
         run: |
           chmod +x build.sh
           cd mpv-winbuild-cmake
+          if [[ "$(ls -A ../patch/*.patch)" ]]; then
+            git am --3way ../patch/*.patch
+          fi
           bash ../build.sh '${{ matrix.bit }}'
       - name: Collect logs
         if: ${{ always() }}
@@ -263,7 +266,7 @@ jobs:
           script: |
             const path = require('path');
             const { readdirSync,existsSync } = require('fs');
-            const myExec = async (command, args = null) => await exec.getExecOutput(command,args,{silent: true}).then(result => result.stdout.trim());
+            const myExec = async (command, args = null) => await exec.getExecOutput(command,args,{silent: true}).then(result => result.stdout.trim()).catch(err => '');
             
             const toolchainDir = path.resolve("mpv-winbuild-cmake");
             const workdir = path.resolve(toolchainDir,"src_packages");
@@ -340,6 +343,16 @@ jobs:
         with:
           path: artifacts
     
+      - name: "Check artifacts"
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const globber = await glob.create(`artifacts/*/mpv*.7z`);
+            const files = await globber.glob();
+            if ( files.length == 0 ) {
+              core.setFailed("Artifact does not exist!");
+            }
+
       - name: Get current time
         run: |
           echo "long_time=$(date "+%Y-%m-%d %H:%M")" >> $GITHUB_ENV
